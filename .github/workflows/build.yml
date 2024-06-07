@@ -44,7 +44,7 @@ jobs:
         cd ${{ github.workspace }}/build
         git clone --depth=1 -b main https://github.com/2dust/AndroidLibXrayLite.git
         cd AndroidLibXrayLite
-        go get github.com/GFW-knocker/Xray-core@${{ github.event.inputs.XRAY_CORE_VERSION }} || true
+        go get github.com/xtls/xray-core@${{ github.event.inputs.XRAY_CORE_VERSION }} || true
         gomobile init
         go mod tidy -v
         gomobile bind -v -androidapi 19 -ldflags='-s -w' ./
