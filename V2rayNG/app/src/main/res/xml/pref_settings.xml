@@ -8,6 +8,12 @@
         android:summary="@string/summary_pref_sniffing_enabled"
         android:title="@string/title_pref_sniffing_enabled" />
 
+    <CheckBoxPreference
+        android:defaultValue="false"
+        android:key="pref_route_only_enabled"
+        android:summary="@string/summary_pref_route_only_enabled"
+        android:title="@string/title_pref_route_only_enabled" />
+
     <PreferenceCategory android:title="@string/title_vpn_settings">
         <CheckBoxPreference
             android:key="pref_per_app_proxy"
@@ -103,13 +109,13 @@
 
         <EditTextPreference
             android:inputType="number"
-            android:key="pref_mux_concurency"
+            android:key="pref_mux_concurrency"
             android:summary="8"
             android:title="@string/title_pref_mux_concurency" />
 
         <EditTextPreference
             android:inputType="number"
-            android:key="pref_mux_xudp_concurency"
+            android:key="pref_mux_xudp_concurrency"
             android:summary="8"
             android:title="@string/title_pref_mux_xudp_concurency" />
 
@@ -204,6 +210,11 @@
             android:key="pref_domestic_dns"
             android:summary="@string/summary_pref_domestic_dns"
             android:title="@string/title_pref_domestic_dns" />
+
+        <EditTextPreference
+            android:key="pref_delay_test_url"
+            android:summary="@string/summary_pref_delay_test_url"
+            android:title="@string/title_pref_delay_test_url" />
 
         <ListPreference
             android:defaultValue="warning"

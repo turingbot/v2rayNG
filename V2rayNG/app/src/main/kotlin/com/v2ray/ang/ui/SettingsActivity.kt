@@ -63,6 +63,7 @@ class SettingsActivity : BaseActivity() {
         private val httpPort by lazy { findPreference<EditTextPreference>(AppConfig.PREF_HTTP_PORT) }
         private val remoteDns by lazy { findPreference<EditTextPreference>(AppConfig.PREF_REMOTE_DNS) }
         private val domesticDns by lazy { findPreference<EditTextPreference>(AppConfig.PREF_DOMESTIC_DNS) }
+        private val delayTestUrl by lazy { findPreference<EditTextPreference>(AppConfig.PREF_DELAY_TEST_URL) }
         private val mode by lazy { findPreference<ListPreference>(AppConfig.PREF_MODE) }
 
         override fun onCreatePreferences(bundle: Bundle?, s: String?) {
@@ -143,18 +144,6 @@ class SettingsActivity : BaseActivity() {
                 true
             }
 
-            remoteDns?.setOnPreferenceChangeListener { _, any ->
-                // remoteDns.summary = any as String
-                val nval = any as String
-                remoteDns?.summary = if (nval == "") AppConfig.DNS_PROXY else nval
-                true
-            }
-            domesticDns?.setOnPreferenceChangeListener { _, any ->
-                // domesticDns.summary = any as String
-                val nval = any as String
-                domesticDns?.summary = if (nval == "") AppConfig.DNS_DIRECT else nval
-                true
-            }
             socksPort?.setOnPreferenceChangeListener { _, any ->
                 val nval = any as String
                 socksPort?.summary = if (TextUtils.isEmpty(nval)) AppConfig.PORT_SOCKS else nval
@@ -163,6 +152,21 @@ class SettingsActivity : BaseActivity() {
             httpPort?.setOnPreferenceChangeListener { _, any ->
                 val nval = any as String
                 httpPort?.summary = if (TextUtils.isEmpty(nval)) AppConfig.PORT_HTTP else nval
+                true
+            }
+            remoteDns?.setOnPreferenceChangeListener { _, any ->
+                val nval = any as String
+                remoteDns?.summary = if (nval == "") AppConfig.DNS_PROXY else nval
+                true
+            }
+            domesticDns?.setOnPreferenceChangeListener { _, any ->
+                val nval = any as String
+                domesticDns?.summary = if (nval == "") AppConfig.DNS_DIRECT else nval
+                true
+            }
+            delayTestUrl?.setOnPreferenceChangeListener { _, any ->
+                val nval = any as String
+                delayTestUrl?.summary = if (nval == "") AppConfig.DelayTestUrl else nval
                 true
             }
             mode?.setOnPreferenceChangeListener { _, newValue ->
@@ -180,7 +184,7 @@ class SettingsActivity : BaseActivity() {
             localDns?.isChecked = settingsStorage.getBoolean(AppConfig.PREF_LOCAL_DNS_ENABLED, false)
             fakeDns?.isChecked = settingsStorage.getBoolean(AppConfig.PREF_FAKE_DNS_ENABLED, false)
             localDnsPort?.summary = settingsStorage.decodeString(AppConfig.PREF_LOCAL_DNS_PORT, AppConfig.PORT_LOCAL_DNS)
-            vpnDns?.summary  = settingsStorage.decodeString(AppConfig.PREF_VPN_DNS, AppConfig.DNS_VPN)
+            vpnDns?.summary = settingsStorage.decodeString(AppConfig.PREF_VPN_DNS, AppConfig.DNS_VPN)
 
             updateMux(settingsStorage.getBoolean(AppConfig.PREF_MUX_ENABLED, false))
             mux?.isChecked = settingsStorage.getBoolean(AppConfig.PREF_MUX_ENABLED, false)
@@ -194,13 +198,15 @@ class SettingsActivity : BaseActivity() {
             fragmentInterval?.summary = settingsStorage.decodeString(AppConfig.PREF_FRAGMENT_INTERVAL, "10-20")
 
             autoUpdateCheck?.isChecked = settingsStorage.getBoolean(AppConfig.SUBSCRIPTION_AUTO_UPDATE, false)
-            autoUpdateInterval?.summary = settingsStorage.decodeString(AppConfig.SUBSCRIPTION_AUTO_UPDATE_INTERVAL,AppConfig.SUBSCRIPTION_DEFAULT_UPDATE_INTERVAL)
+            autoUpdateInterval?.summary =
+                settingsStorage.decodeString(AppConfig.SUBSCRIPTION_AUTO_UPDATE_INTERVAL, AppConfig.SUBSCRIPTION_DEFAULT_UPDATE_INTERVAL)
             autoUpdateInterval?.isEnabled = settingsStorage.getBoolean(AppConfig.SUBSCRIPTION_AUTO_UPDATE, false)
 
             socksPort?.summary = settingsStorage.decodeString(AppConfig.PREF_SOCKS_PORT, AppConfig.PORT_SOCKS)
             httpPort?.summary = settingsStorage.decodeString(AppConfig.PREF_HTTP_PORT, AppConfig.PORT_HTTP)
             remoteDns?.summary = settingsStorage.decodeString(AppConfig.PREF_REMOTE_DNS, AppConfig.DNS_PROXY)
             domesticDns?.summary = settingsStorage.decodeString(AppConfig.PREF_DOMESTIC_DNS, AppConfig.DNS_DIRECT)
+            delayTestUrl?.summary = settingsStorage.decodeString(AppConfig.PREF_DELAY_TEST_URL, AppConfig.DelayTestUrl)
 
             initSharedPreference()
         }
@@ -217,7 +223,8 @@ class SettingsActivity : BaseActivity() {
                 socksPort,
                 httpPort,
                 remoteDns,
-                domesticDns
+                domesticDns,
+                delayTestUrl
             ).forEach { key ->
                 key?.text = key?.summary.toString()
             }
@@ -230,6 +237,7 @@ class SettingsActivity : BaseActivity() {
             }
 
             listOf(
+                AppConfig.PREF_ROUTE_ONLY_ENABLED,
                 AppConfig.PREF_BYPASS_APPS,
                 AppConfig.PREF_SPEED_ENABLED,
                 AppConfig.PREF_CONFIRM_REMOVE,
@@ -343,12 +351,15 @@ class SettingsActivity : BaseActivity() {
                 updateFragmentInterval(settingsStorage.decodeString(AppConfig.PREF_FRAGMENT_INTERVAL, "10-20"))
             }
         }
+
         private fun updateFragmentPackets(value: String?) {
             fragmentPackets?.summary = value.toString()
         }
+
         private fun updateFragmentLength(value: String?) {
             fragmentLength?.summary = value.toString()
         }
+
         private fun updateFragmentInterval(value: String?) {
             fragmentInterval?.summary = value.toString()
         }

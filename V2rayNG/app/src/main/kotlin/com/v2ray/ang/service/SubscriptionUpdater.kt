@@ -11,6 +11,8 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.v2ray.ang.AppConfig
+import com.v2ray.ang.AppConfig.SUBSCRIPTION_UPDATE_CHANNEL
+import com.v2ray.ang.AppConfig.SUBSCRIPTION_UPDATE_CHANNEL_NAME
 import com.v2ray.ang.R
 import com.v2ray.ang.util.AngConfigManager
 import com.v2ray.ang.util.MmkvManager
@@ -18,14 +20,13 @@ import com.v2ray.ang.util.Utils
 
 object SubscriptionUpdater {
 
-    const val notificationChannel = "subscription_update_channel"
 
     class UpdateTask(context: Context, params: WorkerParameters) :
         CoroutineWorker(context, params) {
 
         private val notificationManager = NotificationManagerCompat.from(applicationContext)
         private val notification =
-            NotificationCompat.Builder(applicationContext, notificationChannel)
+            NotificationCompat.Builder(applicationContext, SUBSCRIPTION_UPDATE_CHANNEL)
                 .setWhen(0)
                 .setTicker("Update")
                 .setContentTitle(context.getString(R.string.title_pref_auto_update_subscription))
@@ -43,11 +44,11 @@ object SubscriptionUpdater {
                 val subscription = i.second
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    notification.setChannelId(notificationChannel)
+                    notification.setChannelId(SUBSCRIPTION_UPDATE_CHANNEL)
                     val channel =
                         NotificationChannel(
-                            notificationChannel,
-                            "Subscription Update Service",
+                            SUBSCRIPTION_UPDATE_CHANNEL,
+                            SUBSCRIPTION_UPDATE_CHANNEL_NAME,
                             NotificationManager.IMPORTANCE_MIN
                         )
                     notificationManager.createNotificationChannel(channel)
@@ -58,23 +59,11 @@ object SubscriptionUpdater {
                     "subscription automatic update: ---${subscription.remarks}"
                 )
                 val configs = Utils.getUrlContentWithCustomUserAgent(subscription.url)
-                importBatchConfig(configs, i.first)
+                AngConfigManager.importBatchConfig(configs, i.first, false)
                 notification.setContentText("Updating ${subscription.remarks}")
             }
             notificationManager.cancel(3)
             return Result.success()
-        }
-    }
-
-    fun importBatchConfig(server: String?, subid: String = "") {
-        val append = subid.isEmpty()
-
-        val count = AngConfigManager.importBatchConfig(server, subid, append)
-        if (count <= 0) {
-            AngConfigManager.importBatchConfig(Utils.decode(server!!), subid, append)
-        }
-        if (count <= 0) {
-            AngConfigManager.appendCustomConfigServer(server, subid)
         }
     }
 }

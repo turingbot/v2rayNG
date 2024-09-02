@@ -1,12 +1,11 @@
-name: Build APK
+name: Build Release APK
 
 on:
-  push:
   workflow_dispatch:
     inputs:
-      XRAY_CORE_VERSION:
-        description: 'Xray core version or commit hash'
-        required: false
+      release_tag:
+        required: true
+        type: string
 
 
 jobs:
@@ -23,41 +22,63 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Setup Golang
-      uses: actions/setup-go@v5
-      with:
-        go-version: '1.22.2'
-
-    - name: Install gomobile
-      run: |
-        go install golang.org/x/mobile/cmd/gomobile@latest
-        echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-
-
+    
     - name: Setup Android environment
       uses: android-actions/setup-android@v3
 
 
-    - name: Build dependencies
-      run: |
-        mkdir ${{ github.workspace }}/build
-        cd ${{ github.workspace }}/build
-        git clone --depth=1 -b main https://github.com/2dust/AndroidLibXrayLite.git
-        cd AndroidLibXrayLite
-        go get github.com/xtls/xray-core@${{ github.event.inputs.XRAY_CORE_VERSION }} || true
-        gomobile init
-        go mod tidy -v
-        gomobile bind -v -androidapi 19 -ldflags='-s -w' ./
-        cp *.aar ${{ github.workspace }}/V2rayNG/app/libs/
+    - name: download latest Mahsa-core aar
+      uses: robinraju/release-downloader@v1
+      with:
+        repository: 'GFW-knocker/AndroidLibXrayLite'
+        latest: true
+        fileName: 'libv2ray.aar'
+        out-file-path: '${{ github.workspace }}/V2rayNG/app/libs/'
 
-    - name: Build APK
+
+    - name: Decode Keystore
+      env:
+        ENCODED_KEYSTORE: ${{ secrets.KEYSTORE }}
+      run: |
+        echo $ENCODED_KEYSTORE | base64 -di > keystore.jks
+
+
+    - name: Build Unsiged APK
       run: |
         cd ${{ github.workspace }}/V2rayNG
         chmod 755 gradlew
-        ./gradlew assembleDebug
+        ./gradlew assembleRelease
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v4
+
+    - name: check filenames
+      run: |
+        cd ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/release/
+        ls
+
+
+    - name: Sign app APK
+      uses: r0adkll/sign-android-release@v1    
+      # ID used to access action output
+      id: sign_app
       with:
-        name: apk
-        path: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/debug/
+        releaseDirectory: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/release/
+        signingKeyBase64: ${{ secrets.KEYSTORE }}
+        alias: ${{ secrets.ALIAS }}
+        keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+      env:
+        # override default build-tools version (33.0.0) -- optional
+        BUILD_TOOLS_VERSION: "34.0.0"
+
+
+    - name: check filenames
+      run: |
+        cd ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/release/
+        ls
+
+    - name: Upload NikaNG to release
+      uses: svenstaro/upload-release-action@v2
+      with:
+        file: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/release/*signed.apk
+        tag: ${{ github.event.inputs.release_tag }}
+        file_glob: true

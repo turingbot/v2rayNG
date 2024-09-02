@@ -4,7 +4,13 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.*
+import android.net.ConnectivityManager
+import android.net.LocalSocket
+import android.net.LocalSocketAddress
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
+import android.net.VpnService
 import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.os.StrictMode
@@ -17,8 +23,8 @@ import com.v2ray.ang.dto.ERoutingMode
 import com.v2ray.ang.util.MmkvManager
 import com.v2ray.ang.util.MyContextWrapper
 import com.v2ray.ang.util.Utils
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.io.File
 import java.lang.ref.SoftReference
@@ -53,9 +59,9 @@ class V2RayVpnService : VpnService(), ServiceControl {
     @delegate:RequiresApi(Build.VERSION_CODES.P)
     private val defaultNetworkRequest by lazy {
         NetworkRequest.Builder()
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-                .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
-                .build()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_RESTRICTED)
+            .build()
     }
 
     private val connectivity by lazy { getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager }
@@ -139,11 +145,11 @@ class V2RayVpnService : VpnService(), ServiceControl {
             builder.addDnsServer(PRIVATE_VLAN4_ROUTER)
         } else {
             Utils.getVpnDnsServers()
-                    .forEach {
-                        if (Utils.isPureIpAddress(it)) {
-                            builder.addDnsServer(it)
-                        }
+                .forEach {
+                    if (Utils.isPureIpAddress(it)) {
+                        builder.addDnsServer(it)
                     }
+                }
         }
 
         builder.setSession(V2RayServiceManager.currentConfig?.remarks.orEmpty())
@@ -196,14 +202,16 @@ class V2RayVpnService : VpnService(), ServiceControl {
 
     private fun runTun2socks() {
         val socksPort = Utils.parseInt(settingsStorage?.decodeString(AppConfig.PREF_SOCKS_PORT), AppConfig.PORT_SOCKS.toInt())
-        val cmd = arrayListOf(File(applicationContext.applicationInfo.nativeLibraryDir, TUN2SOCKS).absolutePath,
-                "--netif-ipaddr", PRIVATE_VLAN4_ROUTER,
-                "--netif-netmask", "255.255.255.252",
-                "--socks-server-addr", "127.0.0.1:${socksPort}",
-                "--tunmtu", VPN_MTU.toString(),
-                "--sock-path", "sock_path",//File(applicationContext.filesDir, "sock_path").absolutePath,
-                "--enable-udprelay",
-                "--loglevel", "notice")
+        val cmd = arrayListOf(
+            File(applicationContext.applicationInfo.nativeLibraryDir, TUN2SOCKS).absolutePath,
+            "--netif-ipaddr", PRIVATE_VLAN4_ROUTER,
+            "--netif-netmask", "255.255.255.252",
+            "--socks-server-addr", "127.0.0.1:${socksPort}",
+            "--tunmtu", VPN_MTU.toString(),
+            "--sock-path", "sock_path",//File(applicationContext.filesDir, "sock_path").absolutePath,
+            "--enable-udprelay",
+            "--loglevel", "notice"
+        )
 
         if (settingsStorage?.decodeBool(AppConfig.PREF_PREFER_IPV6) == true) {
             cmd.add("--netif-ip6addr")
@@ -220,14 +228,14 @@ class V2RayVpnService : VpnService(), ServiceControl {
             val proBuilder = ProcessBuilder(cmd)
             proBuilder.redirectErrorStream(true)
             process = proBuilder
-                    .directory(applicationContext.filesDir)
-                    .start()
+                .directory(applicationContext.filesDir)
+                .start()
             Thread(Runnable {
-                Log.d(packageName,"$TUN2SOCKS check")
+                Log.d(packageName, "$TUN2SOCKS check")
                 process.waitFor()
-                Log.d(packageName,"$TUN2SOCKS exited")
+                Log.d(packageName, "$TUN2SOCKS exited")
                 if (isRunning) {
-                    Log.d(packageName,"$TUN2SOCKS restart")
+                    Log.d(packageName, "$TUN2SOCKS restart")
                     runTun2socks()
                 }
             }).start()
@@ -244,7 +252,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
         val path = File(applicationContext.filesDir, "sock_path").absolutePath
         Log.d(packageName, path)
 
-        GlobalScope.launch(Dispatchers.IO) {
+        CoroutineScope(Dispatchers.IO).launch {
             var tries = 0
             while (true) try {
                 Thread.sleep(50L shl tries)
@@ -274,7 +282,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
 //        val emptyInfo = VpnNetworkInfo()
 //        val info = loadVpnNetworkInfo(configName, emptyInfo)!! + (lastNetworkInfo ?: emptyInfo)
 //        saveVpnNetworkInfo(configName, info)
-        isRunning = false;
+        isRunning = false
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             try {
                 connectivity.unregisterNetworkCallback(defaultNetworkCallback)
@@ -327,7 +335,7 @@ class V2RayVpnService : VpnService(), ServiceControl {
     @RequiresApi(Build.VERSION_CODES.N)
     override fun attachBaseContext(newBase: Context?) {
         val context = newBase?.let {
-            MyContextWrapper.wrap(newBase,  Utils.getLocale(newBase))
+            MyContextWrapper.wrap(newBase, Utils.getLocale())
         }
         super.attachBaseContext(context)
     }

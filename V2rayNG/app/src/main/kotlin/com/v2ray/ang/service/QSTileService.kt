@@ -58,6 +58,7 @@ class QSTileService : TileService() {
             Tile.STATE_INACTIVE -> {
                 Utils.startVServiceFromToggle(this)
             }
+
             Tile.STATE_ACTIVE -> {
                 Utils.stopVService(this)
             }
@@ -67,22 +68,26 @@ class QSTileService : TileService() {
     private var mMsgReceive: BroadcastReceiver? = null
 
     private class ReceiveMessageHandler(context: QSTileService) : BroadcastReceiver() {
-        internal var mReference: SoftReference<QSTileService> = SoftReference(context)
+        var mReference: SoftReference<QSTileService> = SoftReference(context)
         override fun onReceive(ctx: Context?, intent: Intent?) {
             val context = mReference.get()
             when (intent?.getIntExtra("key", 0)) {
                 AppConfig.MSG_STATE_RUNNING -> {
                     context?.setState(Tile.STATE_ACTIVE)
                 }
+
                 AppConfig.MSG_STATE_NOT_RUNNING -> {
                     context?.setState(Tile.STATE_INACTIVE)
                 }
+
                 AppConfig.MSG_STATE_START_SUCCESS -> {
                     context?.setState(Tile.STATE_ACTIVE)
                 }
+
                 AppConfig.MSG_STATE_START_FAILURE -> {
                     context?.setState(Tile.STATE_INACTIVE)
                 }
+
                 AppConfig.MSG_STATE_STOP_SUCCESS -> {
                     context?.setState(Tile.STATE_INACTIVE)
                 }
