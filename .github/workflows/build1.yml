@@ -1,0 +1,42 @@
+name: Download Latest aar
+
+on:
+  push:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        required: true
+        type: string
+  
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    steps:
+    
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: make directory
+        run: |
+          mkdir ${{ github.workspace }}/myaar
+          cd ${{ github.workspace }}/myaar
+        
+      - name: Download latest release
+        uses: robinraju/release-downloader@v1
+        with:
+          repository: 'GFW-knocker/AndroidLibXrayLite'
+          latest: true
+          fileName: '*'
+          out-file-path: '${{ github.workspace }}/myaar/'
+      
+      - name: check filenames
+        run: |
+          cd ${{ github.workspace }}/myaar/
+          ls
+          
+      - name: Upload AndroidLibXrayLite to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          file: '*'
+          tag: ${{ github.event.inputs.release_tag }}
+          file_glob: true
