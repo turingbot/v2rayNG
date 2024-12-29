@@ -6,7 +6,9 @@ on:
       release_tag:
         required: true
         type: string
-
+  push:
+    branches:
+      - master
 
 jobs:
   build:
