@@ -32,7 +32,7 @@ jobs:
     - name: download latest Mahsa-core aar
       uses: robinraju/release-downloader@v1
       with:
-        repository: '2dust/AndroidLibXrayLite'
+        repository: 'GFW-knocker/AndroidLibXrayLite'
         latest: true
         fileName: 'libv2ray.aar'
         out-file-path: '${{ github.workspace }}/V2rayNG/app/libs/'
@@ -78,7 +78,7 @@ jobs:
         cd ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/release/
         ls
 
-    - name: Upload V2rayNG to release
+    - name: Upload v2rayNG to release
       uses: svenstaro/upload-release-action@v2
       with:
         file: ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/release/*signed.apk
