@@ -52,12 +52,6 @@ jobs:
         ./gradlew assembleRelease
 
 
-    - name: check filenames
-      run: |
-        cd ${{ github.workspace }}/V2rayNG/app/build/outputs/apk/release/
-        ls
-
-
     - name: Sign app APK
       uses: r0adkll/sign-android-release@v1    
       # ID used to access action output
